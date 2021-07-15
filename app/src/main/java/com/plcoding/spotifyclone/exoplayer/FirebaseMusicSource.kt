@@ -71,7 +71,7 @@ class FirebaseMusicSource @Inject constructor(
             .build()
 
         MediaBrowserCompat.MediaItem(description,FLAG_PLAYABLE) // Make all media item browsable and playable.
-    }
+    }.toMutableList()
 
 
     private val onReadyListeners = mutableListOf<(Boolean) -> Unit>()
