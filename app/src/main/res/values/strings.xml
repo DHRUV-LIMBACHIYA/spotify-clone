@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Spotify Clone</string>
+    <string name="channel_description">Show currently playing music</string>
 </resources>
