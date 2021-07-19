@@ -8,6 +8,7 @@ import com.google.android.exoplayer2.audio.AudioAttributes
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.plcoding.spotifyclone.data.remote.SongDatabase
+import com.plcoding.spotifyclone.exoplayer.FirebaseMusicSource
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,6 +28,10 @@ object ServiceModule {
     @ServiceScoped
     @Provides
     fun provideSongDatabase() = SongDatabase()
+
+    @ServiceScoped
+    @Provides
+    fun provideFirebaseMusicSource() = FirebaseMusicSource(SongDatabase())
 
     @ServiceScoped
     @Provides

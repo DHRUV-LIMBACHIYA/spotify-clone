@@ -19,6 +19,8 @@ import javax.inject.Inject
 /**
  * Created by Dhruv Limbachiya on 14-07-2021.
  */
+
+// This class is used to provide music source from the firebase with an appropriate format.
 class FirebaseMusicSource @Inject constructor(
     private val songDatabase: SongDatabase
 ) {

@@ -25,7 +25,7 @@ class MusicNotificationManager(
     private val newSongCallback: () -> Unit
 ) {
 
-    private var musicNotificationManager: PlayerNotificationManager // Start,updates and cancel media style notification reflecting the player state
+    private var musicNotificationManager: PlayerNotificationManager // Start,updates and cancel media style notification reflecting the player state.
 
 
     init {

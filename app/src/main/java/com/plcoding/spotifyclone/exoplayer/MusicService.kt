@@ -1,6 +1,7 @@
 package com.plcoding.spotifyclone.exoplayer
 
 import android.app.PendingIntent
+import android.content.Intent
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
@@ -16,6 +17,7 @@ import com.plcoding.spotifyclone.exoplayer.callbacks.MusicNotificationListener
 import com.plcoding.spotifyclone.exoplayer.callbacks.MusicPlayerEventListener
 import com.plcoding.spotifyclone.exoplayer.callbacks.MusicPlayerPreparer
 import com.plcoding.spotifyclone.other.Constants.MEDIA_ROOT_ID
+import com.plcoding.spotifyclone.other.Constants.NETWORK_ERROR
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -57,11 +59,12 @@ class MusicService : MediaBrowserServiceCompat() {
 
     private lateinit var musicPlayerListener: MusicPlayerEventListener
 
-    private var isPlayerInitialized: Boolean = false // Tracker variable for tracking initialization of player
+    private var isPlayerInitialized: Boolean =
+        false // Tracker variable for tracking initialization of player
 
     companion object {
-        var currentSongDuration:Long = 0L // Ready from anywhere
-        private set // write from only this file
+        var currentSongDuration: Long = 0L // Ready from anywhere
+            private set // write from only this file
     }
 
     override fun onCreate() {
@@ -94,11 +97,12 @@ class MusicService : MediaBrowserServiceCompat() {
         mediaSessionConnector =
             MediaSessionConnector(mediaSessionCompat) // Create MediaConnector instance using MediaSessionCompat object.
         mediaSessionConnector.setPlaybackPreparer(musicPlayerPreparer)
-        mediaSessionConnector.setQueueNavigator(MusicQueueNavigator())
+        mediaSessionConnector.setQueueNavigator(MusicQueueNavigator()) // Handles queue navigation actions(SKIP or Previous), and updates the media session queue
+        mediaSessionConnector.setPlayer(exoPlayer) // Set ExoPlayer. Now MediaConnector connects a MediaSessionCompat to a Player.
 
         musicPlayerListener = MusicPlayerEventListener(this)
         exoPlayer.addListener(musicPlayerListener)
-        mediaSessionConnector.setPlayer(exoPlayer) // Set ExoPlayer. Now MediaConnector connects a MediaSessionCompat to a Player.
+        musicNotificationManager.showNotification(exoPlayer) // Start showing MediaStyle notification.
     }
 
     inner class MusicQueueNavigator : TimelineQueueNavigator(mediaSessionCompat) {
@@ -118,6 +122,11 @@ class MusicService : MediaBrowserServiceCompat() {
         exoPlayer.setMediaSource(firebaseMusicSource.asMediaSource(dataSourceFactory))
         exoPlayer.seekTo(currentSongIndex, 0L)
         exoPlayer.playWhenReady = playNow
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        exoPlayer.stop()
     }
 
     override fun onDestroy() {
@@ -146,7 +155,7 @@ class MusicService : MediaBrowserServiceCompat() {
                     result.sendResult(firebaseMusicSource.asMediaItem())
 
                     // Prepare the player for the first song but do not play it.
-                    if(!isPlayerInitialized && firebaseMusicSource.songs.isNotEmpty()) {
+                    if (!isPlayerInitialized && firebaseMusicSource.songs.isNotEmpty()) {
                         preparePlayer(
                             firebaseMusicSource.songs[0],
                             firebaseMusicSource.songs,
@@ -154,12 +163,13 @@ class MusicService : MediaBrowserServiceCompat() {
                         )
                         isPlayerInitialized = true
                     }
-                }else{
+                } else {
+                    mediaSessionCompat.sendSessionEvent(NETWORK_ERROR,null)
                     result.sendResult(null)
                 }
             }
 
-            if(!resultSent){
+            if (!resultSent) {
                 result.detach() // Detach this message from the current thread and allow the sendResult call to happen later.
             }
         }
