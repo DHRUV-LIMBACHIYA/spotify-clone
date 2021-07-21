@@ -18,8 +18,8 @@ class MusicNotificationListener(private val musicService: MusicService) :
     override fun onNotificationCancelled(notificationId: Int, dismissedByUser: Boolean) {
         musicService.apply {
             stopForeground(true) //Remove this service from foreground state, allowing it to be killed if more memory is needed.
-            isForegroundService = false
             stopSelf() // stop the service
+            isForegroundService = false
         }
     }
 

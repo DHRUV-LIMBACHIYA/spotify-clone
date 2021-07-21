@@ -27,14 +27,6 @@
 
     </FrameLayout>
 
-    <ImageView
-        android:id="@+id/ivCurSongImage"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:scaleType="centerCrop"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/vpSong"
         android:layout_width="0dp"
@@ -42,7 +34,7 @@
         android:background="@color/darkBackground"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/ivPlayPause"
-        app:layout_constraintStart_toEndOf="@+id/ivCurSongImage" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <ImageView
         android:id="@+id/ivPlayPause"

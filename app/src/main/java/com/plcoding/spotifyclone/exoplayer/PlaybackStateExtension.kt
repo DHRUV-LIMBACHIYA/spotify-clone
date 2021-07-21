@@ -7,9 +7,7 @@ import android.support.v4.media.session.PlaybackStateCompat
  */
 
 inline val PlaybackStateCompat.isPrepare
-    get() = state == PlaybackStateCompat.STATE_BUFFERING ||
-            state == PlaybackStateCompat.STATE_PLAYING ||
-            state == PlaybackStateCompat.STATE_PAUSED
+    get() = state == PlaybackStateCompat.STATE_BUFFERING || state == PlaybackStateCompat.STATE_PLAYING || state == PlaybackStateCompat.STATE_PAUSED
 
 inline val PlaybackStateCompat.isPlaying
     get() = state == PlaybackStateCompat.STATE_BUFFERING ||

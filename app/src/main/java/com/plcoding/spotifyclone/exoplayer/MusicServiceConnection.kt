@@ -7,11 +7,13 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.plcoding.spotifyclone.other.Constants.NETWORK_ERROR
 import com.plcoding.spotifyclone.other.Event
 import com.plcoding.spotifyclone.other.Resource
+import com.plcoding.spotifyclone.ui.MainActivity.Companion.TAG
 
 /**
  * Created by Dhruv Limbachiya on 19-07-2021.
@@ -30,7 +32,9 @@ class MusicServiceConnection(
     private var _currentPlayingSong = MutableLiveData<MediaMetadataCompat?>()
     val currentPlayingSong: LiveData<MediaMetadataCompat?> = _currentPlayingSong
 
-    private var _playbackState = MutableLiveData<PlaybackStateCompat?>()
+    private var _playbackState = MutableLiveData<PlaybackStateCompat?>().apply {
+        postValue(EMPTY_PLAYBACK_STATE)
+    }
     val playbackState: LiveData<PlaybackStateCompat?> = _playbackState
 
 
@@ -97,6 +101,7 @@ class MusicServiceConnection(
     inner class MediaControllerCallback : MediaControllerCompat.Callback() {
 
         override fun onPlaybackStateChanged(state: PlaybackStateCompat?) {
+            Log.i(TAG, "onPlaybackStateChanged: current state : ${state?.state}")
             _playbackState.postValue(state)
         }
 
@@ -123,5 +128,12 @@ class MusicServiceConnection(
             mediaBrowserConnectionCallback.onConnectionSuspended()
         }
     }
+
+
+    @Suppress("PropertyName")
+    val EMPTY_PLAYBACK_STATE: PlaybackStateCompat = PlaybackStateCompat.Builder()
+        .setState(PlaybackStateCompat.STATE_NONE, 0, 0f)
+        .build()
+
 
 }

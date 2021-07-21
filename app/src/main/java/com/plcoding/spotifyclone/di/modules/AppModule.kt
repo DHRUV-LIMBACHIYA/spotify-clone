@@ -5,6 +5,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.request.RequestOptions
 import com.plcoding.spotifyclone.R
+import com.plcoding.spotifyclone.adapters.SwipeSongAdapter
 import com.plcoding.spotifyclone.exoplayer.MusicServiceConnection
 import dagger.Module
 import dagger.Provides
