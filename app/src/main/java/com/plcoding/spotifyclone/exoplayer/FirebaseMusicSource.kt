@@ -1,10 +1,12 @@
 package com.plcoding.spotifyclone.exoplayer
 
+import android.annotation.SuppressLint
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.MediaMetadataCompat.*
+import android.util.Log
 import androidx.core.net.toUri
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource
@@ -12,6 +14,7 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.plcoding.spotifyclone.data.remote.SongDatabase
 import com.plcoding.spotifyclone.exoplayer.State.*
+import com.plcoding.spotifyclone.ui.MainActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -32,21 +35,30 @@ class FirebaseMusicSource @Inject constructor(
      * Function for fetching songs from the Song Database and formatted into MediaMetaDataCompat.
      */
     suspend fun fetchMediaSongs() = withContext(Dispatchers.IO) {
-        state = STATE_INITIALIZING
-        songs = songDatabase.getAllSongs().map { song ->
-            MediaMetadataCompat.Builder().apply {
-                putString(METADATA_KEY_ARTIST, song.songSubtitle)
-                putString(METADATA_KEY_MEDIA_ID, song.songId)
-                putString(METADATA_KEY_TITLE, song.songName)
-                putString(METADATA_KEY_DISPLAY_TITLE, song.songName)
-                putString(METADATA_KEY_DISPLAY_SUBTITLE, song.songSubtitle)
-                putString(METADATA_KEY_DISPLAY_ICON_URI, song.songThumbnail)
-                putString(METADATA_KEY_MEDIA_URI, song.songUrl)
-                putString(METADATA_KEY_ALBUM_ART_URI, song.songUrl)
-
-            }.build()
+        withContext(Dispatchers.Main){
+            state = STATE_INITIALIZING
         }
-        state = STATE_INITIALIZED // all song loaded and formatted to MediaMetaDataCompat.
+
+        val allSongs = songDatabase.getAllSongs()
+        Log.i(MainActivity.TAG, "fetchMediaSongs:${allSongs.size} ")
+        songs = allSongs.map { song ->
+            MediaMetadataCompat.Builder()
+                .putString(METADATA_KEY_ARTIST, song.song_subtitle)
+                .putString(METADATA_KEY_MEDIA_ID, song.song_id)
+                .putString(METADATA_KEY_TITLE, song.song_subtitle)
+                .putString(METADATA_KEY_DISPLAY_TITLE, song.song_subtitle)
+                .putString(METADATA_KEY_DISPLAY_ICON_URI, song.song_thumbnail)
+                .putString(METADATA_KEY_MEDIA_URI, song.song_url)
+                .putString(METADATA_KEY_ALBUM_ART_URI, song.song_thumbnail)
+                .putString(METADATA_KEY_DISPLAY_SUBTITLE, song.song_subtitle)
+                .putString(METADATA_KEY_DISPLAY_DESCRIPTION, song.song_subtitle)
+                .build()
+            }
+        withContext(Dispatchers.Main){
+            state = STATE_INITIALIZED // all song loaded and formatted to MediaMetaDataCompat.
+        }
+
+        Log.i(MainActivity.TAG, "fetchMediaSongs: Songs => ${songs.size} ")
     }
 
     /**
@@ -57,23 +69,33 @@ class FirebaseMusicSource @Inject constructor(
         val concatenatingMediaSource = ConcatenatingMediaSource()
         songs.forEach { song ->
             val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
-                .createMediaSource(MediaItem.fromUri(song.getString(METADATA_KEY_MEDIA_URI))) // Create a media source from media item.
+//                .createMediaSource(song.getString(METADATA_KEY_MEDIA_URI).toUri())
+                .createMediaSource(MediaItem.Builder().setUri(song.getString(METADATA_KEY_MEDIA_URI)).build())
+//                .createMediaSource(MediaItem.fromUri(song.getString(METADATA_KEY_MEDIA_URI))) // Create a media source from media item.
             concatenatingMediaSource.addMediaSource(mediaSource)
         }
         return concatenatingMediaSource
     }
 
-    fun asMediaItem() = songs.map { song ->
-        val description = MediaDescriptionCompat.Builder()
-            .setMediaUri(song.getString(METADATA_KEY_MEDIA_URI).toUri())
-            .setTitle(song.description.title)
-            .setSubtitle(song.description.subtitle)
-            .setMediaId(song.description.mediaId)
-            .setIconUri(song.description.iconUri)
-            .build()
+     fun asMediaItem(): MutableList<MediaBrowserCompat.MediaItem> {
+        Log.i(MainActivity.TAG, "asMediaItem: SONGS ${songs.size} ")
 
-        MediaBrowserCompat.MediaItem(description,FLAG_PLAYABLE) // Make all media item browsable and playable.
-    }.toMutableList()
+        val mediaItem =  songs.map { song ->
+            val description = MediaDescriptionCompat.Builder()
+                .setMediaUri(song.getString(METADATA_KEY_MEDIA_URI).toUri())
+                .setTitle(song.description.title)
+                .setSubtitle(song.description.subtitle)
+                .setMediaId(song.description.mediaId)
+                .setIconUri(song.description.iconUri)
+                .build()
+
+            MediaBrowserCompat.MediaItem(description,FLAG_PLAYABLE) // Make all media item browsable and playable.
+        }.toMutableList()
+
+        Log.i(MainActivity.TAG, "asMediaItem: ${mediaItem.size} ")
+
+        return mediaItem
+    }
 
 
     private val onReadyListeners = mutableListOf<(Boolean) -> Unit>()
@@ -82,8 +104,8 @@ class FirebaseMusicSource @Inject constructor(
         set(value) {
             // Check if all songs are initialized/loaded or failed to load
             if (value == STATE_INITIALIZED || value == STATE_ERROR) {
-                field = value  // update the state.
                 synchronized(onReadyListeners) {
+                    field = value  // update the state.
                     onReadyListeners.forEach { listener ->
                         listener(state == STATE_INITIALIZED) // Set listener to true if it initialized(loaded - ready to go) and false if state is STATE_ERROR.
                     }

@@ -7,6 +7,7 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
+import android.util.Log
 import androidx.media.MediaBrowserServiceCompat
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
@@ -18,11 +19,10 @@ import com.plcoding.spotifyclone.exoplayer.callbacks.MusicPlayerEventListener
 import com.plcoding.spotifyclone.exoplayer.callbacks.MusicPlayerPreparer
 import com.plcoding.spotifyclone.other.Constants.MEDIA_ROOT_ID
 import com.plcoding.spotifyclone.other.Constants.NETWORK_ERROR
+import com.plcoding.spotifyclone.ui.MainActivity
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
+import timber.log.Timber
 import javax.inject.Inject
 
 /**
@@ -45,22 +45,21 @@ class MusicService : MediaBrowserServiceCompat() {
 
     private var currentSong: MediaMetadataCompat? = null
 
-
     private val job = Job()
-
     private val serviceScope =
         CoroutineScope(Dispatchers.Main + job) // Custom behaviour Coroutine Scope
 
     lateinit var mediaSessionCompat: MediaSessionCompat
+
     private lateinit var mediaSessionConnector: MediaSessionConnector // Mediator between MediaSessionCompat & ExoPlayer.
+
     private lateinit var musicNotificationManager: MusicNotificationManager
 
-    var isForeground = false
+    var isForegroundService = false
 
     private lateinit var musicPlayerListener: MusicPlayerEventListener
 
-    private var isPlayerInitialized: Boolean =
-        false // Tracker variable for tracking initialization of player
+    private var isPlayerInitialized = false // Tracker variable for tracking initialization of player
 
     companion object {
         var currentSongDuration: Long = 0L // Ready from anywhere
@@ -69,6 +68,10 @@ class MusicService : MediaBrowserServiceCompat() {
 
     override fun onCreate() {
         super.onCreate()
+        serviceScope.launch {
+            firebaseMusicSource.fetchMediaSongs() // Fetch the songs from the firebase.
+        }
+
         val activityIntent = packageManager?.getLaunchIntentForPackage(packageName)?.let {
             PendingIntent.getActivity(this, 0, it, 0)
         }
@@ -107,7 +110,7 @@ class MusicService : MediaBrowserServiceCompat() {
 
     inner class MusicQueueNavigator : TimelineQueueNavigator(mediaSessionCompat) {
         override fun getMediaDescription(player: Player, windowIndex: Int): MediaDescriptionCompat {
-            return firebaseMusicSource.songs.get(windowIndex).description
+            return firebaseMusicSource.songs[windowIndex].description
         }
     }
 
@@ -118,7 +121,7 @@ class MusicService : MediaBrowserServiceCompat() {
         playNow: Boolean
     ) {
         // If current song is null then set index = 0 (play first song) else set the appropriate index
-        val currentSongIndex = if (itemToPlay == null) 0 else songs.indexOf(itemToPlay)
+        val currentSongIndex = if (currentSong == null) 0 else songs.indexOf(itemToPlay)
         exoPlayer.setMediaSource(firebaseMusicSource.asMediaSource(dataSourceFactory))
         exoPlayer.seekTo(currentSongIndex, 0L)
         exoPlayer.playWhenReady = playNow
@@ -148,29 +151,34 @@ class MusicService : MediaBrowserServiceCompat() {
         parentId: String,
         result: Result<MutableList<MediaBrowserCompat.MediaItem>>
     ) {
-        if (parentId == MEDIA_ROOT_ID) {
-            val resultSent = firebaseMusicSource.whenReady { isInitialized ->
-                // Send media item as result if all the songs are initialized else send null.
-                if (isInitialized) {
-                    result.sendResult(firebaseMusicSource.asMediaItem())
-
-                    // Prepare the player for the first song but do not play it.
-                    if (!isPlayerInitialized && firebaseMusicSource.songs.isNotEmpty()) {
-                        preparePlayer(
-                            firebaseMusicSource.songs[0],
-                            firebaseMusicSource.songs,
-                            false
-                        )
-                        isPlayerInitialized = true
+        when (parentId) {
+            MEDIA_ROOT_ID -> {
+                val resultSent = firebaseMusicSource.whenReady { isInitialized ->
+                    // Send media item as result if all the songs are initialized else send null.
+                    if (isInitialized) {
+                            result.sendResult(firebaseMusicSource.asMediaItem())
+                            Log.i(MainActivity.TAG, "onLoadChildren: ${firebaseMusicSource.asMediaItem().size}")
+                            // Prepare the player for the first song but do not play it.
+                            if (!isPlayerInitialized && firebaseMusicSource.songs.isNotEmpty()) {
+                                preparePlayer(
+                                    firebaseMusicSource.songs[0],
+                                    firebaseMusicSource.songs,
+                                    false
+                                )
+                                isPlayerInitialized = true
+                            }
+                            Log.i(MainActivity.TAG, "onLoadChildren: Data present")
+                    } else {
+                        mediaSessionCompat.sendSessionEvent(NETWORK_ERROR, null)
+                        result.sendResult(null)
+                        Log.i(MainActivity.TAG, "onLoadChildren: NETWORK_ERROR")
                     }
-                } else {
-                    mediaSessionCompat.sendSessionEvent(NETWORK_ERROR,null)
-                    result.sendResult(null)
                 }
-            }
 
-            if (!resultSent) {
-                result.detach() // Detach this message from the current thread and allow the sendResult call to happen later.
+                if (!resultSent) {
+                    Log.i(MainActivity.TAG, "onLoadChildren: DETACH")
+                    result.detach() // Detach this message from the current thread and allow the sendResult call to happen later.
+                }
             }
         }
     }

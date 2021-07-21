@@ -33,20 +33,33 @@ class MusicNotificationManager(
         // A callback may be registered to receive updates from the session, such as metadata and play state changes.
         val mediaController = MediaControllerCompat(context, mediaSessionToken)
 
-
-        // Build a notification
-        musicNotificationManager = PlayerNotificationManager.Builder(
+        musicNotificationManager = PlayerNotificationManager.createWithNotificationChannel(
             context,
-            NOTIFICATION_ID,
             CHANNEL_ID,
+            R.string.notification_channel_name,
+            R.string.channel_description,
+            NOTIFICATION_ID,
             CustomMediaDescriptorAdapter(mediaController),
+            notificationListener
         ).apply {
-            setSmallIconResourceId(R.drawable.ic_music)
-            setNotificationListener(notificationListener)
-            setChannelDescriptionResourceId(R.string.channel_description)
-        }.build()
+            setSmallIcon(R.drawable.ic_music)
+            setMediaSessionToken(mediaSessionToken)
+        }
 
-        musicNotificationManager.setMediaSessionToken(mediaSessionToken)
+//
+//        // Build a notification
+//        musicNotificationManager = PlayerNotificationManager.Builder(
+//            context,
+//            NOTIFICATION_ID,
+//            CHANNEL_ID,
+//            CustomMediaDescriptorAdapter(mediaController),
+//        ).apply {
+//            setSmallIconResourceId(R.drawable.ic_music)
+//            setNotificationListener(notificationListener)
+//            setChannelDescriptionResourceId(R.string.channel_description)
+//        }.build()
+//
+//        musicNotificationManager.setMediaSessionToken(mediaSessionToken)
     }
 
     // starts or show the notification unless the player is in Player.STATE_IDLE
