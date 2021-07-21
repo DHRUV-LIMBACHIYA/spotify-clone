@@ -59,7 +59,8 @@ class MusicService : MediaBrowserServiceCompat() {
 
     private lateinit var musicPlayerListener: MusicPlayerEventListener
 
-    private var isPlayerInitialized = false // Tracker variable for tracking initialization of player
+    private var isPlayerInitialized =
+        false // Tracker variable for tracking initialization of player
 
     companion object {
         var currentSongDuration: Long = 0L // Ready from anywhere
@@ -156,27 +157,23 @@ class MusicService : MediaBrowserServiceCompat() {
                 val resultSent = firebaseMusicSource.whenReady { isInitialized ->
                     // Send media item as result if all the songs are initialized else send null.
                     if (isInitialized) {
-                            result.sendResult(firebaseMusicSource.asMediaItem())
-                            Log.i(MainActivity.TAG, "onLoadChildren: ${firebaseMusicSource.asMediaItem().size}")
-                            // Prepare the player for the first song but do not play it.
-                            if (!isPlayerInitialized && firebaseMusicSource.songs.isNotEmpty()) {
-                                preparePlayer(
-                                    firebaseMusicSource.songs[0],
-                                    firebaseMusicSource.songs,
-                                    false
-                                )
-                                isPlayerInitialized = true
-                            }
-                            Log.i(MainActivity.TAG, "onLoadChildren: Data present")
+                        result.sendResult(firebaseMusicSource.asMediaItem())
+                        // Prepare the player for the first song but do not play it.
+                        if (!isPlayerInitialized && firebaseMusicSource.songs.isNotEmpty()) {
+                            preparePlayer(
+                                firebaseMusicSource.songs[0],
+                                firebaseMusicSource.songs,
+                                false
+                            )
+                            isPlayerInitialized = true
+                        }
                     } else {
                         mediaSessionCompat.sendSessionEvent(NETWORK_ERROR, null)
                         result.sendResult(null)
-                        Log.i(MainActivity.TAG, "onLoadChildren: NETWORK_ERROR")
                     }
                 }
 
                 if (!resultSent) {
-                    Log.i(MainActivity.TAG, "onLoadChildren: DETACH")
                     result.detach() // Detach this message from the current thread and allow the sendResult call to happen later.
                 }
             }

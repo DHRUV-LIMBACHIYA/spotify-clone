@@ -34,7 +34,7 @@ class HomeFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentHomeBinding.inflate(inflater,container,false)
+        binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -48,17 +48,16 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun setUpRecyclerView(){
+    private fun setUpRecyclerView() {
         binding.rvAllSongs.apply {
             adapter = songAdapter
             layoutManager = LinearLayoutManager(requireContext())
         }
     }
 
-    private fun subscribeToLiveData(){
-
-        mViewModel.mediaItems.observe(viewLifecycleOwner,{ result ->
-            when(result){
+    private fun subscribeToLiveData() {
+        mViewModel.mediaItems.observe(viewLifecycleOwner, { result ->
+            when (result) {
                 is Resource.Loading -> binding.allSongsProgressBar.isVisible = true
                 is Resource.Success -> {
                     result.data?.let { songs ->

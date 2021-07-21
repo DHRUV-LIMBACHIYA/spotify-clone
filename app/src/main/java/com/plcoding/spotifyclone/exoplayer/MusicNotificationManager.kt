@@ -33,40 +33,26 @@ class MusicNotificationManager(
         // A callback may be registered to receive updates from the session, such as metadata and play state changes.
         val mediaController = MediaControllerCompat(context, mediaSessionToken)
 
-        musicNotificationManager = PlayerNotificationManager.createWithNotificationChannel(
+        // Build a notification
+        musicNotificationManager = PlayerNotificationManager.Builder(
             context,
-            CHANNEL_ID,
-            R.string.notification_channel_name,
-            R.string.channel_description,
             NOTIFICATION_ID,
+            CHANNEL_ID,
             CustomMediaDescriptorAdapter(mediaController),
-            notificationListener
         ).apply {
-            setSmallIcon(R.drawable.ic_music)
-            setMediaSessionToken(mediaSessionToken)
-        }
+            setChannelNameResourceId(R.string.notification_channel_name)
+            setSmallIconResourceId(R.drawable.ic_music)
+            setNotificationListener(notificationListener)
+            setChannelDescriptionResourceId(R.string.channel_description)
+        }.build()
 
-//
-//        // Build a notification
-//        musicNotificationManager = PlayerNotificationManager.Builder(
-//            context,
-//            NOTIFICATION_ID,
-//            CHANNEL_ID,
-//            CustomMediaDescriptorAdapter(mediaController),
-//        ).apply {
-//            setSmallIconResourceId(R.drawable.ic_music)
-//            setNotificationListener(notificationListener)
-//            setChannelDescriptionResourceId(R.string.channel_description)
-//        }.build()
-//
-//        musicNotificationManager.setMediaSessionToken(mediaSessionToken)
+        musicNotificationManager.setMediaSessionToken(mediaSessionToken)
     }
 
     // starts or show the notification unless the player is in Player.STATE_IDLE
     fun showNotification(player: Player) {
         musicNotificationManager.setPlayer(player)
     }
-
 
     /**
      * Sub class of MediaDescriptor Adapter.

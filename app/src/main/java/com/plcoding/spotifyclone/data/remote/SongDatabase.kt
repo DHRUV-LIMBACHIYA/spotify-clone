@@ -28,7 +28,6 @@ class SongDatabase {
             songsCollection.get().await().toObjects(Song::class.java)
         } catch (e: Exception) {
             Log.i(TAG, "Error in fetching song")
-//            Timber.tag(MainActivity.TAG).i("Error in fetching song")
             emptyList()
         }
     }

@@ -2,19 +2,17 @@ package com.plcoding.spotifyclone.ui.viewmodels
 
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.plcoding.spotifyclone.data.model.Song
-import com.plcoding.spotifyclone.exoplayer.*
+import com.plcoding.spotifyclone.exoplayer.MusicServiceConnection
+import com.plcoding.spotifyclone.exoplayer.isPlayEnabled
+import com.plcoding.spotifyclone.exoplayer.isPlaying
+import com.plcoding.spotifyclone.exoplayer.isPrepare
 import com.plcoding.spotifyclone.other.Constants.MEDIA_ROOT_ID
 import com.plcoding.spotifyclone.other.Resource
-import com.plcoding.spotifyclone.ui.MainActivity
-import com.plcoding.spotifyclone.ui.MainActivity.Companion.TAG
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -33,22 +31,14 @@ class MainViewModel @Inject constructor(
     val networkError = musicServiceConnection.networkError
     val currentPlayingSong = musicServiceConnection.currentPlayingSong
     val playbackState = musicServiceConnection.playbackState
-    val rootId = musicServiceConnection.root
-
 
     init {
-         // Status Loading...
-            _mediaItems.value = Resource.Loading(null)
+        // Status Loading...
+        _mediaItems.value = Resource.Loading(null)
 
-            musicServiceConnection.mediaBrowserCompat.subscribe(MEDIA_ROOT_ID, object : MediaBrowserCompat.SubscriptionCallback(){
-
-                override fun onError(parentId: String) {
-                    super.onError(parentId)
-                    if(parentId == MEDIA_ROOT_ID){
-                        Log.i(TAG, "onError: Children cannot be loaded")
-                    }
-                }
-
+        musicServiceConnection.subscribe(
+            MEDIA_ROOT_ID,
+            object : MediaBrowserCompat.SubscriptionCallback() {
                 override fun onChildrenLoaded(
                     parentId: String,
                     children: MutableList<MediaBrowserCompat.MediaItem>
@@ -64,18 +54,11 @@ class MainViewModel @Inject constructor(
                             mediaItem.description.iconUri.toString()
                         )
                     }
-
-                    Log.i(TAG, "onChildrenLoaded: ${items.size}")
-
                     // Status data loaded successfully.
                     _mediaItems.value = Resource.Success(items)
                 }
             })
     }
-
-
-
-
 
     // skip to next song.
     fun skipToNext() {
@@ -98,7 +81,8 @@ class MainViewModel @Inject constructor(
         // Current song.
         if (isPrepared && (mediaItem.song_id == currentPlayingSong.value?.getString(
                 MediaMetadataCompat.METADATA_KEY_MEDIA_ID
-            ))) {
+            ))
+        ) {
             playbackState.value?.let { state ->
                 when {
                     state.isPlaying -> if (toggle) musicServiceConnection.transportControls.pause()
@@ -117,6 +101,5 @@ class MainViewModel @Inject constructor(
         musicServiceConnection.unSubscribe(MEDIA_ROOT_ID,
             object : MediaBrowserCompat.SubscriptionCallback() {}) // UnSubscribe to Parent Id.
     }
-
 
 }

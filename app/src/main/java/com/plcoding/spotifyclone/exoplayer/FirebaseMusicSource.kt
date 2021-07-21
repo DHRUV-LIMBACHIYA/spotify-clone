@@ -1,12 +1,10 @@
 package com.plcoding.spotifyclone.exoplayer
 
-import android.annotation.SuppressLint
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.MediaMetadataCompat.*
-import android.util.Log
 import androidx.core.net.toUri
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource
@@ -14,7 +12,6 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.plcoding.spotifyclone.data.remote.SongDatabase
 import com.plcoding.spotifyclone.exoplayer.State.*
-import com.plcoding.spotifyclone.ui.MainActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -30,17 +27,12 @@ class FirebaseMusicSource @Inject constructor(
 
     var songs = emptyList<MediaMetadataCompat>()
 
-
     /**
      * Function for fetching songs from the Song Database and formatted into MediaMetaDataCompat.
      */
-    suspend fun fetchMediaSongs() = withContext(Dispatchers.IO) {
-        withContext(Dispatchers.Main){
-            state = STATE_INITIALIZING
-        }
-
+    suspend fun fetchMediaSongs() = withContext(Dispatchers.Main) {
+        state = STATE_INITIALIZING
         val allSongs = songDatabase.getAllSongs()
-        Log.i(MainActivity.TAG, "fetchMediaSongs:${allSongs.size} ")
         songs = allSongs.map { song ->
             MediaMetadataCompat.Builder()
                 .putString(METADATA_KEY_ARTIST, song.song_subtitle)
@@ -53,49 +45,38 @@ class FirebaseMusicSource @Inject constructor(
                 .putString(METADATA_KEY_DISPLAY_SUBTITLE, song.song_subtitle)
                 .putString(METADATA_KEY_DISPLAY_DESCRIPTION, song.song_subtitle)
                 .build()
-            }
-        withContext(Dispatchers.Main){
-            state = STATE_INITIALIZED // all song loaded and formatted to MediaMetaDataCompat.
         }
-
-        Log.i(MainActivity.TAG, "fetchMediaSongs: Songs => ${songs.size} ")
+        state = STATE_INITIALIZED // all song loaded and formatted to MediaMetaDataCompat.
     }
 
     /**
      * Create a media sources from media item and concatenate multiple media sources using [ConcatenatingMediaSource]'s addMediaSource() method.
      * @return - concatenatingMediaSource (list of multiple media source)
      */
-    fun asMediaSource(dataSourceFactory: DefaultDataSourceFactory) : ConcatenatingMediaSource{
+    fun asMediaSource(dataSourceFactory: DefaultDataSourceFactory): ConcatenatingMediaSource {
         val concatenatingMediaSource = ConcatenatingMediaSource()
         songs.forEach { song ->
             val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactory)
-//                .createMediaSource(song.getString(METADATA_KEY_MEDIA_URI).toUri())
-                .createMediaSource(MediaItem.Builder().setUri(song.getString(METADATA_KEY_MEDIA_URI)).build())
-//                .createMediaSource(MediaItem.fromUri(song.getString(METADATA_KEY_MEDIA_URI))) // Create a media source from media item.
+                .createMediaSource(MediaItem.fromUri(song.getString(METADATA_KEY_MEDIA_URI))) // Create a media source from media item.
             concatenatingMediaSource.addMediaSource(mediaSource)
         }
         return concatenatingMediaSource
     }
 
-     fun asMediaItem(): MutableList<MediaBrowserCompat.MediaItem> {
-        Log.i(MainActivity.TAG, "asMediaItem: SONGS ${songs.size} ")
+    fun asMediaItem(): MutableList<MediaBrowserCompat.MediaItem> = songs.map { song ->
+        val description = MediaDescriptionCompat.Builder()
+            .setMediaUri(song.getString(METADATA_KEY_MEDIA_URI).toUri())
+            .setTitle(song.description.title)
+            .setSubtitle(song.description.subtitle)
+            .setMediaId(song.description.mediaId)
+            .setIconUri(song.description.iconUri)
+            .build()
 
-        val mediaItem =  songs.map { song ->
-            val description = MediaDescriptionCompat.Builder()
-                .setMediaUri(song.getString(METADATA_KEY_MEDIA_URI).toUri())
-                .setTitle(song.description.title)
-                .setSubtitle(song.description.subtitle)
-                .setMediaId(song.description.mediaId)
-                .setIconUri(song.description.iconUri)
-                .build()
-
-            MediaBrowserCompat.MediaItem(description,FLAG_PLAYABLE) // Make all media item browsable and playable.
-        }.toMutableList()
-
-        Log.i(MainActivity.TAG, "asMediaItem: ${mediaItem.size} ")
-
-        return mediaItem
-    }
+        MediaBrowserCompat.MediaItem(
+            description,
+            FLAG_PLAYABLE
+        ) // Make all media item browsable and playable.
+    }.toMutableList()
 
 
     private val onReadyListeners = mutableListOf<(Boolean) -> Unit>()
@@ -124,7 +105,6 @@ class FirebaseMusicSource @Inject constructor(
             true
         }
     }
-
 }
 
 enum class State {

@@ -7,14 +7,11 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.PlaybackStateCompat
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.plcoding.spotifyclone.other.Constants.NETWORK_ERROR
 import com.plcoding.spotifyclone.other.Event
 import com.plcoding.spotifyclone.other.Resource
-import com.plcoding.spotifyclone.ui.MainActivity
-import timber.log.Timber
 
 /**
  * Created by Dhruv Limbachiya on 19-07-2021.
@@ -55,9 +52,6 @@ class MusicServiceConnection(
         connect()
     }
 
-    private var _root = MutableLiveData<String>()
-    val root: LiveData<String> = _root
-
     val transportControls: MediaControllerCompat.TransportControls
         get() = mediaController.transportControls
 
@@ -79,15 +73,12 @@ class MusicServiceConnection(
                     registerCallback(MediaControllerCallback())
                 }
             _isConnected.postValue(Event(Resource.Success(true)));
-            _root.value = mediaBrowserCompat.root
-            Log.i(MainActivity.TAG, "onConnected: ")
         }
 
         override fun onConnectionSuspended() {
             _isConnected.postValue(
                 Event(Resource.Error(null, "Connection is suspended."))
             )
-            Log.i(MainActivity.TAG, "onConnectionSuspended: ")
         }
 
         override fun onConnectionFailed() {
@@ -99,8 +90,6 @@ class MusicServiceConnection(
                     )
                 )
             )
-
-            Log.i(MainActivity.TAG, "onConnectionFailed: ")
         }
     }
 
