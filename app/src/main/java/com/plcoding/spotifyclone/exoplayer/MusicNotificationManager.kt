@@ -25,14 +25,13 @@ class MusicNotificationManager(
     private val newSongCallback: () -> Unit
 ) {
 
-    private var musicNotificationManager: PlayerNotificationManager // Start,updates and cancel media style notification reflecting the player state
+    private var musicNotificationManager: PlayerNotificationManager // Start,updates and cancel media style notification reflecting the player state.
 
 
     init {
         // Media Controller - Allows an app to interact with an ongoing media session. Media buttons and other commands can be sent to the session.
         // A callback may be registered to receive updates from the session, such as metadata and play state changes.
         val mediaController = MediaControllerCompat(context, mediaSessionToken)
-
 
         // Build a notification
         musicNotificationManager = PlayerNotificationManager.Builder(
@@ -41,6 +40,7 @@ class MusicNotificationManager(
             CHANNEL_ID,
             CustomMediaDescriptorAdapter(mediaController),
         ).apply {
+            setChannelNameResourceId(R.string.notification_channel_name)
             setSmallIconResourceId(R.drawable.ic_music)
             setNotificationListener(notificationListener)
             setChannelDescriptionResourceId(R.string.channel_description)
@@ -53,7 +53,6 @@ class MusicNotificationManager(
     fun showNotification(player: Player) {
         musicNotificationManager.setPlayer(player)
     }
-
 
     /**
      * Sub class of MediaDescriptor Adapter.

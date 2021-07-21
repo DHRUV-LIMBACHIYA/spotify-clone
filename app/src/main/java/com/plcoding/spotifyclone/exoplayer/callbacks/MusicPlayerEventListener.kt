@@ -12,19 +12,11 @@ class MusicPlayerEventListener(
     private val musicService: MusicService
 ) : Player.Listener{
 
-//    override fun onPlaybackStateChanged(state: Int) {
-//        super.onPlaybackStateChanged(state)
-//        if(state == Player.STATE_READY && Player.){
-//          musicService.stopForeground(false)
-//        }
-//    }
-
     override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
         if(playbackState == Player.STATE_READY && !playWhenReady){
             musicService.stopForeground(false)
         }
     }
-
 
     override fun onPlayerError(error: ExoPlaybackException) {
         super.onPlayerError(error)

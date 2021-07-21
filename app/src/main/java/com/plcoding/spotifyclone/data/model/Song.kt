@@ -8,9 +8,9 @@ package com.plcoding.spotifyclone.data.model
  * Hold the song data.
  */
 data class Song(
-    val songId: String = "",
-    val songName: String = "",
-    val songSubtitle: String = "",
-    val songUrl: String = "",
-    val songThumbnail: String = "",
+    val song_id: String = "",
+    val song_name: String = "",
+    val song_subtitle: String = "",
+    val song_url: String = "",
+    val song_thumbnail: String = "",
 )

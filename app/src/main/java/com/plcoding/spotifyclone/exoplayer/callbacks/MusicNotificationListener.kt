@@ -1,7 +1,6 @@
 package com.plcoding.spotifyclone.exoplayer.callbacks
 
 import android.app.Notification
-import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
@@ -19,8 +18,8 @@ class MusicNotificationListener(private val musicService: MusicService) :
     override fun onNotificationCancelled(notificationId: Int, dismissedByUser: Boolean) {
         musicService.apply {
             stopForeground(true) //Remove this service from foreground state, allowing it to be killed if more memory is needed.
+            isForegroundService = false
             stopSelf() // stop the service
-            isForeground = false
         }
     }
 
@@ -30,7 +29,7 @@ class MusicNotificationListener(private val musicService: MusicService) :
         ongoing: Boolean
     ) {
         musicService.apply {
-            if (ongoing && !isForeground) {
+            if (ongoing && !isForegroundService) {
                 // Start the foreground service
                 ContextCompat.startForegroundService(
                     this,
@@ -38,7 +37,7 @@ class MusicNotificationListener(private val musicService: MusicService) :
                 )
             }
             startForeground(NOTIFICATION_ID, notification) // Make the started service run in foreground by providing a notification.
-            isForeground = true
+            isForegroundService = true
         }
     }
 }
