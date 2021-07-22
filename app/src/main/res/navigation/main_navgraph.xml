@@ -10,4 +10,12 @@
         android:name="com.plcoding.spotifyclone.ui.fragments.HomeFragment"
         android:label="HomeFragment"
         tools:layout="@layout/fragment_home"/>
+    <fragment
+        android:id="@+id/songFragment"
+        android:name="com.plcoding.spotifyclone.ui.fragments.SongFragment"
+        android:label="Song Fragment" />
+
+    <action android:id="@+id/globalActionToSongFragment"
+        app:destination="@id/songFragment"/>
+
 </navigation>

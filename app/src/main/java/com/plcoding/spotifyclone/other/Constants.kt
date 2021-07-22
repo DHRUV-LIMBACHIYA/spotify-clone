@@ -9,4 +9,5 @@ object Constants {
     const val CHANNEL_ID = "Music"
     const val MEDIA_ROOT_ID = "root"
     const val NETWORK_ERROR = "network error"
+    const val UPDATE_POSITION_DELAY = 100L
 }

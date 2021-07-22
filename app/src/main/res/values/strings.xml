@@ -2,4 +2,6 @@
     <string name="app_name">Spotify Clone</string>
     <string name="channel_description">Show currently playing music</string>
     <string name="notification_channel_name">Spotify Music</string>
+    <string name="duration_unknown">--:--</string>
+    <string name="duration_format">%d:%02d</string>
 </resources>

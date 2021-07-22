@@ -123,8 +123,8 @@ class MusicService : MediaBrowserServiceCompat() {
     ) {
         // If current song is null then set index = 0 (play first song) else set the appropriate index
         val currentSongIndex = if (currentSong == null) 0 else songs.indexOf(itemToPlay)
-//        exoPlayer.prepare(firebaseMusicSource.asMediaSource(dataSourceFactory))
         exoPlayer.setMediaSource(firebaseMusicSource.asMediaSource(dataSourceFactory))
+        exoPlayer.prepare()
         exoPlayer.seekTo(currentSongIndex, 0L)
         exoPlayer.playWhenReady = playNow
     }

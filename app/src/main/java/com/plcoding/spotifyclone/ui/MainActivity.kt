@@ -5,6 +5,9 @@ import android.os.Bundle
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.activity.viewModels
+import androidx.core.view.isVisible
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.RequestManager
 import com.google.android.material.snackbar.Snackbar
@@ -13,6 +16,7 @@ import com.plcoding.spotifyclone.adapters.SwipeSongAdapter
 import com.plcoding.spotifyclone.data.model.Song
 import com.plcoding.spotifyclone.exoplayer.isPlaying
 import com.plcoding.spotifyclone.other.Resource.*
+import com.plcoding.spotifyclone.other.toSong
 import com.plcoding.spotifyclone.ui.viewmodels.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_main.*
@@ -43,7 +47,6 @@ class MainActivity : AppCompatActivity() {
         vpSong.adapter = swipeSongAdapter
 
         vpSong.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-
             override fun onPageSelected(position: Int) {
                 super.onPageSelected(position)
                 if(currentPlaybackState?.isPlaying == true){
@@ -54,13 +57,43 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        // Play/Pause
         ivPlayPause.setOnClickListener {
             currentPlayingSong?.let {
                 mainViewModel.playOrToggle(it,true)
             }
         }
+
+        swipeSongAdapter.setOnItemClickListener { song ->
+            // Navigate to the Song Fragment.
+            navHostFragment.findNavController().navigate(
+                R.id.globalActionToSongFragment
+            )
+        }
+
+        navHostFragment.findNavController().addOnDestinationChangedListener { controller, destination, arguments ->
+            when(destination.id){
+                R.id.songFragment -> hideBottomBar() // Hide bottom bar when we are in SongFragment.
+                else -> showBottomBar() // Else show bottom bar in every case.
+            }
+        }
     }
 
+    // Show the bottom bar.
+    private fun showBottomBar(){
+        vpSong.isVisible = true
+        ivPlayPause.isVisible = true
+    }
+
+    // Hide the bottom bar.
+    private fun hideBottomBar(){
+        vpSong.isVisible = false
+        ivPlayPause.isVisible = false
+    }
+
+    /**
+     * Function for managing viewPager currentItem.
+     */
     private fun switchViewPagerToCurrentSong(song: Song) {
         val newSongIndex = swipeSongAdapter.songs.indexOf(song)
         if (newSongIndex != -1) {
@@ -69,16 +102,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Observe the live data.
+     */
     private fun subscribeToLiveData() {
         mainViewModel.mediaItems.observe(this) { songResource ->
             when (songResource) {
                 is Success -> {
                     songResource.data?.let { songs ->
                         swipeSongAdapter.songs = songs // Fill adapter with latest songs data.
-                        if (songs.isNotEmpty()) {
-//                            glide.load((currentPlayingSong ?: songs[0].song_thumbnail))
-//                                .into(ivCurSongImage)
-                        }
                         switchViewPagerToCurrentSong(currentPlayingSong ?: return@observe)
                     }
                 }
@@ -90,7 +122,6 @@ class MainActivity : AppCompatActivity() {
         mainViewModel.currentPlayingSong.observe(this) {
             if (it == null) return@observe
             currentPlayingSong = it.toSong()
-//            glide.load((currentPlayingSong?.song_thumbnail)).into(ivCurSongImage)
             switchViewPagerToCurrentSong(currentPlayingSong ?: return@observe)
         }
 
@@ -135,22 +166,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     companion object {
-        const val TAG = "TAGGIE"
+        const val TAG = "MainActivity"
     }
 }
 
 
-// Extension function for converting MediaMetadataCompat to Custom Song object.
-private fun MediaMetadataCompat.toSong(): Song? {
-    return description?.let {
-        Song(
-            description.mediaId ?: "",
-            description.title.toString(),
-            description.subtitle.toString(),
-            description.mediaUri.toString(),
-            description.iconUri.toString()
-        )
-    }
-
-
-}
